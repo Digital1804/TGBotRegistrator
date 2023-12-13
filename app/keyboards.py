@@ -27,10 +27,10 @@ day_num = {
 }
 
 main = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text="Записаться на прием")],
-    [KeyboardButton(text="Мои записи")],
-    [KeyboardButton(text="Отменить прием")],
-    [KeyboardButton(text="Контакты")]
+    [KeyboardButton(text="📝 Записаться на прием")],
+    [KeyboardButton(text="📌 Мои записи")],
+    [KeyboardButton(text="❌ Отменить прием")],
+    [KeyboardButton(text="☎️ Контакты")]
 ], resize_keyboard=True, input_field_placeholder="Выберите действие")
 
 

@@ -10,7 +10,7 @@ async def main():
     #await drop_tables()
     await create_tables()
     #await create_data()
-    bot = Bot(token=TOKEN)
+    bot = Bot(token=TOKEN, parse_mode='HTML')
     dp = Dispatcher()
     dp.include_router(router)
     await dp.start_polling(bot)

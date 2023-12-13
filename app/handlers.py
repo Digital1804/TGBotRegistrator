@@ -20,7 +20,7 @@ async def process_start_command(message: Message):
     await add_user(message.from_user.id, message.from_user.username)
     await message.answer("Здравствуйте, чтобы вы хотели?", reply_markup=kb.main)
     
-@router.message(F.text == "Мои записи")
+@router.message(F.text.contains("Мои записи"))
 async def my_records(message: Message):
     user_id = message.chat.id
     records = await get_records(user_id)
@@ -33,20 +33,20 @@ async def my_records(message: Message):
         await message.answer("У вас нет записей")
     
     
-@router.message(F.text == "Контакты")
+@router.message(F.text.contains("Контакты"))
 async def contacts(message: Message):
     await message.answer("Наши контакты", reply_markup=await kb.contacts())
     
 @router.callback_query(F.data.startswith('contbranch_'))
 async def cont_callback(callback: CallbackQuery):
     branch = await get_full_branch(int(callback.data.split('_')[1]))
-    await callback.message.answer(f"Адрес:{branch.address}\nТелефон регистратуры:{branch.phone}")
+    await callback.message.answer(f"<b>Адрес: </b>{branch.address}\n\n<b>Телефон регистратуры: </b><code>{branch.phone}</code>")
     
-@router.message(F.text == "Записаться на прием")
+@router.message(F.text.contains("Записаться на прием"))
 async def spec(message: Message):
     user_id = message.chat.id
     user_state[user_id] = []
-    await message.answer("Выберите специализацию", reply_markup=await kb.specializations())
+    await message.answer("Выберите направление", reply_markup=await kb.specializations())
     
 
 @router.callback_query(F.data.startswith('specalization_'))
@@ -83,7 +83,7 @@ async def branch_callback(callback: CallbackQuery):
     else:
         user_state[user_id].append(button_id)
         branch_id, service_id, spec_id = map(int, callback.data.split('_')[1:])
-        await callback.message.answer("Выберите сотрудника", reply_markup=await kb.employees(branch_id, service_id, spec_id))
+        await callback.message.answer("Выберите врача", reply_markup=await kb.employees(branch_id, service_id, spec_id))
         await callback.answer('')
 
 
@@ -96,7 +96,7 @@ async def send_calendar(callback: CallbackQuery):
     else:
         user_state[user_id].append(button_id)
         employee_id, branch_id, service_id, spec_id = map(int, callback.data.split('_')[1:])
-        await callback.message.answer("Выберите день:", reply_markup=await kb.calendar(employee_id, branch_id, service_id, spec_id))
+        await callback.message.answer("Выберите день", reply_markup=await kb.calendar(employee_id, branch_id, service_id, spec_id))
         await callback.answer('')
 
 
@@ -109,7 +109,7 @@ async def send_timeslots(callback: CallbackQuery):
     else:
         user_state[user_id].append(button_id)
         data, employee_id, branch_id, service_id, spec_id = callback.data.split('_')[1:]
-        await callback.message.answer("Выберите время:", reply_markup= await kb.timeslots(data, employee_id, branch_id, service_id, spec_id))
+        await callback.message.answer("Выберите время", reply_markup= await kb.timeslots(data, employee_id, branch_id, service_id, spec_id))
         await callback.answer('')
 
 @router.callback_query(F.data.startswith('time_'))
@@ -125,7 +125,7 @@ async def process_calendar_button(callback: CallbackQuery):
         br = await get_branch(branch_id)
         se = await get_service(service_id)
         time = await get_time(time_id)
-        text = f"Ваша запись\nВрач: {em}\nОтделение: {br}\nУслуга: {se}\nДата: {date}\nВремя записи: {str(time)[:5]}"
+        text = f"Вы записаны на <b>{se} {date} в {str(time)[:5]} </b> \n\n<b>Врач:</b> {em}\n<b>Отделение:</b> {br}"
         record = (await add_record(callback.from_user.id, date, time, service_id, branch_id, employee_id)).inserted_primary_key[0]
         close = (await close_time(employee_id, time, date, record)).inserted_primary_key[0]
         await callback.message.answer(text= text)
@@ -148,7 +148,7 @@ async def remind(callback: CallbackQuery, close_id, record_id):
     #     if datetime.now().strftime("%Y-%m-%d %H:%M:%S") == remind_time:
     #         break
 
-@router.message(F.text == "Отменить прием")
+@router.message(F.text.contains("Отменить прием"))
 async def cancel(message: Message):
     await message.answer("Выберите запись для отмены", reply_markup=await kb.records(message.from_user.id))
     
