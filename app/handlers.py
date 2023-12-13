@@ -1,26 +1,15 @@
 from aiogram import Router, F
-from aiogram.filters import CommandStart, StateFilter
+from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import StatesGroup, State
+from asyncio import sleep as asleep
 import app.keyboards as kb
+from datetime import timedelta
 from app.database.requests import  *
 from app.database.add_requests import  *
 from app.database.get_scalar import *
 from app.database.get_scalars import *
-from typing import Any, Dict
 
 router = Router()
-
-class Recording(StatesGroup):
-    reg = State()
-    spec = State()
-    service = State()
-    branch = State()
-    employee = State()
-    date = State()
-    time = State()
-    confirm = State()
     
 user_state = {}
 
@@ -52,15 +41,14 @@ async def cont_callback(callback: CallbackQuery):
     await callback.message.answer(f"Адрес:{branch.address}\nТелефон регистратуры:{branch.phone}")
     
 @router.message(F.text == "Записаться на прием")
-async def spec(message: Message, state: FSMContext):
+async def spec(message: Message):
     user_id = message.chat.id
     user_state[user_id] = []
     await message.answer("Выберите специализацию", reply_markup=await kb.specializations())
-    await state.set_state(Recording.spec)
     
 
 @router.callback_query(F.data.startswith('specalization_'))
-async def spec_callback(callback: CallbackQuery, state: FSMContext):
+async def spec_callback(callback: CallbackQuery):
     user_id = callback.from_user.id
     button_id = 'specalization_'
     if button_id in user_state[user_id]:
@@ -69,12 +57,10 @@ async def spec_callback(callback: CallbackQuery, state: FSMContext):
         user_state[user_id].append(button_id)
         spec_id = int(callback.data.split('_')[1])
         await callback.message.answer("Выберите услугу", reply_markup=await kb.services(spec_id))
-        await state.update_data(spec=spec_id)
-        await state.set_state(Recording.service)
     
 
 @router.callback_query(F.data.startswith('service_'))
-async def service_callback(callback: CallbackQuery, state: FSMContext):
+async def service_callback(callback: CallbackQuery):
     user_id = callback.from_user.id
     button_id = 'service_'
     if button_id in user_state[user_id]:
@@ -84,12 +70,10 @@ async def service_callback(callback: CallbackQuery, state: FSMContext):
         service_id, spec_id = map(int, callback.data.split('_')[1:])
         await callback.message.answer("Выберите отделение", reply_markup=await kb.branches(service_id, spec_id))
         await callback.answer('')
-        await state.update_data(service=service_id)
-        await state.set_state(Recording.branch)
     
 
 @router.callback_query(F.data.startswith('branch_'))
-async def branch_callback(callback: CallbackQuery, state: FSMContext):
+async def branch_callback(callback: CallbackQuery):
     user_id = callback.from_user.id
     button_id = 'branch_'
     if button_id in user_state[user_id]:
@@ -98,13 +82,11 @@ async def branch_callback(callback: CallbackQuery, state: FSMContext):
         user_state[user_id].append(button_id)
         branch_id, service_id, spec_id = map(int, callback.data.split('_')[1:])
         await callback.message.answer("Выберите сотрудника", reply_markup=await kb.employees(branch_id, service_id, spec_id))
-        await callback.answer('') 
-        await state.update_data(branch=branch_id)
-        await state.set_state(Recording.employee)
+        await callback.answer('')
 
 
 @router.callback_query(F.data.startswith('employee_'))
-async def send_calendar(callback: CallbackQuery, state: FSMContext):
+async def send_calendar(callback: CallbackQuery):
     user_id = callback.from_user.id
     button_id = 'employee_'
     if button_id in user_state[user_id]:
@@ -114,12 +96,10 @@ async def send_calendar(callback: CallbackQuery, state: FSMContext):
         employee_id, branch_id, service_id, spec_id = map(int, callback.data.split('_')[1:])
         await callback.message.answer("Выберите день:", reply_markup=await kb.calendar(employee_id, branch_id, service_id, spec_id))
         await callback.answer('')
-        await state.update_data(employee=employee_id)
-        await state.set_state(Recording.date)
 
 
 @router.callback_query(F.data.startswith('calendar_'))
-async def send_timeslots(callback: CallbackQuery, state: FSMContext):
+async def send_timeslots(callback: CallbackQuery):
     user_id = callback.from_user.id
     button_id = 'calendar_'
     if button_id in user_state[user_id]:
@@ -129,11 +109,9 @@ async def send_timeslots(callback: CallbackQuery, state: FSMContext):
         data, employee_id, branch_id, service_id, spec_id = callback.data.split('_')[1:]
         await callback.message.answer("Выберите время:", reply_markup= await kb.timeslots(data, employee_id, branch_id, service_id, spec_id))
         await callback.answer('')
-        await state.update_data(date=data)
-        await state.set_state(Recording.time)
 
 @router.callback_query(F.data.startswith('time_'))
-async def process_calendar_button(callback: CallbackQuery, state: FSMContext):
+async def process_calendar_button(callback: CallbackQuery):
     user_id = callback.from_user.id
     button_id = 'time_'
     if button_id in user_state[user_id]:
@@ -146,22 +124,26 @@ async def process_calendar_button(callback: CallbackQuery, state: FSMContext):
         se = await get_service(service_id)
         time = await get_time(time_id)
         text = f"Ваша запись\nВрач: {em}\nОтделение: {br}\nУслуга: {se}\nДата: {date}\nВремя записи: {time}"
-        await add_record(callback.from_user.id, date, time, service_id, branch_id, employee_id)
-        await close_time(employee_id, time, date)
+        record = (await add_record(callback.from_user.id, date, time, service_id, branch_id, employee_id)).inserted_primary_key[0]
+        close = await close_time(employee_id, time, date, record)
         await callback.message.answer(text= text)
         await callback.answer('')
-        data = await state.update_data(time=time)
-        await state.set_state(Recording.confirm)
-        await show_summary(callback=callback, data=data)
-        
-        
-    
-async def show_summary(callback: CallbackQuery, data: Dict[str, Any], positive: bool = True) -> None:
-    name = data["spec"]
-    await callback.message.answer(text=name)
+        await remind(callback, close, record)
 
-        
-        
+
+async def remind(callback: CallbackQuery, close: ClosedTime, record_id):
+    message = "Подтвердите запись!"
+    record = await get_close_record(record_id)
+    employee = await get_employee(record.employee_id)
+    res = close.day - timedelta(days=1)
+    remind_time = res.strftime("%Y-%m-%d %H:%M:%S")
+    while True:
+        if datetime.now().strftime("%Y-%m-%d %H:%M:%S") == remind_time:
+            await callback.message.answer(f'Вы подтверждаете запись?\n{record.date} в {record.start_time}\nВрач: {employee}\n', reply_markup=await kb.yes_no(record_id))
+            await callback.answer('')
+            break
+        await asleep(1)
+
 @router.message(F.text == "Отменить прием")
 async def cancel(message: Message):
     await message.answer("Выберите запись для отмены", reply_markup=await kb.records(message.from_user.id))
@@ -177,7 +159,8 @@ async def cancel_record(callback: CallbackQuery):
         record_id = int(callback.data.split('_')[1])
         await callback.message.answer("Вы уверены что хотите отменить прием?", reply_markup=await kb.yes_no(record_id))
         await callback.answer('')
-        
+
+           
 @router.callback_query(F.data.startswith('yes'))
 async def yes(callback: CallbackQuery):
     user_id = callback.from_user.id

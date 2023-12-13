@@ -3,6 +3,15 @@ from sqlalchemy import select
 
 from app.database.requests import  *
 
+day_name = {
+    0: "Понедельник",
+    1: "Вторник",
+    2: "Среда",
+    3: "Четверг",
+    4: "Пятница",
+    5: "Суббота",
+    6: "Воскресенье"
+}
 async def get_specializations():
     async with assync_session() as session:
         res = await session.scalars(select(Specialization))
@@ -40,10 +49,11 @@ async def get_dates(employee_id):
     
 async def get_times(employee_id, data):
     async with assync_session() as session:
-        beg = await session.scalar(select(Shedule.from_time).where(Shedule.employee_id==employee_id))
-        fin = await session.scalar(select(Shedule.till_time).where(Shedule.employee_id==employee_id))
-        launch = await session.scalar(select(Shedule.launch_time).where(Shedule.employee_id==employee_id))
         date = datetime.strptime(data, '%d.%m.%Y').date()
+        day = date.weekday()
+        beg = await session.scalar(select(Shedule.from_time).where(Shedule.employee_id==employee_id).where(Shedule.weekday == day_name[day]))
+        fin = await session.scalar(select(Shedule.till_time).where(Shedule.employee_id==employee_id).where(Shedule.weekday == day_name[day]))
+        launch = await session.scalar(select(Shedule.launch_time).where(Shedule.employee_id==employee_id))
         closed_times = await session.scalars(select(ClosedTime.time).where(ClosedTime.employee_id==employee_id).where(ClosedTime.day==date))
         res = await session.scalars(select(Timeslots).where(Timeslots.time >= beg).where(Timeslots.time <= fin).where(Timeslots.time != launch).where(Timeslots.time.not_in(closed_times)))
         return res    

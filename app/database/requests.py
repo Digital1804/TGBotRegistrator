@@ -4,18 +4,13 @@ from sqlalchemy import select, insert, delete, func
 from datetime import datetime
    
     
-async def close_time(employee_id, time, data):
+async def close_time(employee_id, time, data, record_id):
     async with assync_session() as session:
         date = datetime.strptime(data, '%d.%m.%Y').date()
-        res = await session.execute(insert(ClosedTime).values(employee_id=employee_id, time=time, day=date))
+        res = await session.execute(insert(ClosedTime).values(employee_id=employee_id, time=time, day=date, record_id=record_id))
         await session.commit()
-        return res  
-    
-async def get_day(data):
-    async with assync_session() as session:
-        result = await session.execute(select(func.extract('dow', data)))
-        for r in result:
-            return int(str(r)[1])-1
+        return res 
+
         
 async def delete_record(id):
     async with assync_session() as session:

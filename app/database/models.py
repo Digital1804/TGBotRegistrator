@@ -88,6 +88,7 @@ class ClosedTime(Base):
     day = mapped_column(DATE)
     time = mapped_column(TIME)
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"))
+    record_id = mapped_column(ForeignKey("records.id"))
     
 class Timeslots(Base):
     __tablename__ = 'time_slots'
@@ -128,10 +129,10 @@ async def create_data():
             BranchToService(branch_id=1, service_id=1),
             BranchToService(branch_id=2, service_id=2),
             BranchToService(branch_id=2, service_id=3),
-            Shedule(from_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), launch_time=datetime.strptime("12:00:00", '%H:%M:%S').time(), till_time=datetime.strptime("17:00:00", '%H:%M:%S').time(), weekday="Понедельник", employee_id=3),
-            Shedule(from_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), launch_time=datetime.strptime("12:00:00", '%H:%M:%S').time(),till_time=datetime.strptime("17:00:00", '%H:%M:%S').time(), weekday="Понедельник", employee_id=1),
-            Shedule(from_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), launch_time=datetime.strptime("12:00:00", '%H:%M:%S').time(),till_time=datetime.strptime("17:00:00", '%H:%M:%S').time(), weekday="Вторник", employee_id=1),
-            Shedule(from_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), launch_time=datetime.strptime("12:00:00", '%H:%M:%S').time(),till_time=datetime.strptime("17:00:00", '%H:%M:%S').time(), weekday="Среда", employee_id=2),
+            Shedule(from_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), launch_time=datetime.strptime("12:00:00", '%H:%M:%S').time(), till_time=datetime.strptime("20:00:00", '%H:%M:%S').time(), weekday="Понедельник", employee_id=3),
+            Shedule(from_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), launch_time=datetime.strptime("12:00:00", '%H:%M:%S').time(),till_time=datetime.strptime("20:00:00", '%H:%M:%S').time(), weekday="Понедельник", employee_id=1),
+            Shedule(from_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), launch_time=datetime.strptime("12:00:00", '%H:%M:%S').time(),till_time=datetime.strptime("20:00:00", '%H:%M:%S').time(), weekday="Вторник", employee_id=1),
+            Shedule(from_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), launch_time=datetime.strptime("12:00:00", '%H:%M:%S').time(),till_time=datetime.strptime("16:00:00", '%H:%M:%S').time(), weekday="Среда", employee_id=2),
             Shedule(from_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), launch_time=datetime.strptime("12:00:00", '%H:%M:%S').time(),till_time=datetime.strptime("17:00:00", '%H:%M:%S').time(), weekday="Четверг", employee_id=2),
             Timeslots(time=datetime.strptime("08:00:00", '%H:%M:%S').time()),
             Timeslots(time=datetime.strptime("09:00:00", '%H:%M:%S').time()),
@@ -144,6 +145,7 @@ async def create_data():
             Timeslots(time=datetime.strptime("16:00:00", '%H:%M:%S').time()),
             Timeslots(time=datetime.strptime("17:00:00", '%H:%M:%S').time()),
             Timeslots(time=datetime.strptime("18:00:00", '%H:%M:%S').time()),
+            Timeslots(time=datetime.strptime("18:52:00", '%H:%M:%S').time()),
             Timeslots(time=datetime.strptime("19:00:00", '%H:%M:%S').time()),
             Timeslots(time=datetime.strptime("20:00:00", '%H:%M:%S').time())
             #Record(user_id=732791195, date=datetime.strptime("01-01-2022", '%m-%d-%Y').date(), start_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), service_id=1, branch_id=1, employee_id=1, price=100)
