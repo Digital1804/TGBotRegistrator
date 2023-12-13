@@ -40,3 +40,8 @@ async def get_close_record(rec_id):
     async with assync_session() as session:
         res = await session.scalar(select(Record).where(Record.id==rec_id))
         return res
+    
+async def get_close(close_id):
+    async with assync_session() as session:
+        res = await session.scalar(select(ClosedTime).where(ClosedTime.id==close_id))
+        return res

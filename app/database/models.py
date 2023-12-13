@@ -145,7 +145,6 @@ async def create_data():
             Timeslots(time=datetime.strptime("16:00:00", '%H:%M:%S').time()),
             Timeslots(time=datetime.strptime("17:00:00", '%H:%M:%S').time()),
             Timeslots(time=datetime.strptime("18:00:00", '%H:%M:%S').time()),
-            Timeslots(time=datetime.strptime("18:52:00", '%H:%M:%S').time()),
             Timeslots(time=datetime.strptime("19:00:00", '%H:%M:%S').time()),
             Timeslots(time=datetime.strptime("20:00:00", '%H:%M:%S').time())
             #Record(user_id=732791195, date=datetime.strptime("01-01-2022", '%m-%d-%Y').date(), start_time=datetime.strptime("08:00:00", '%H:%M:%S').time(), service_id=1, branch_id=1, employee_id=1, price=100)

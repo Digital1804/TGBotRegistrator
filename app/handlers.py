@@ -26,7 +26,9 @@ async def my_records(message: Message):
     records = await get_records(user_id)
     if records != []:
         for record in records:
-            await message.answer(f'{record.date} в {record.start_time}\nВрач: {await get_employee(record.employee_id)}\n')
+            date = record.date.strftime("%d.%m.%Y")
+            time = str(record.start_time)[:5]
+            await message.answer(f'{date} в {time}\nВрач: {await get_employee(record.employee_id)}\n')
     else:
         await message.answer("У вас нет записей")
     
@@ -123,26 +125,28 @@ async def process_calendar_button(callback: CallbackQuery):
         br = await get_branch(branch_id)
         se = await get_service(service_id)
         time = await get_time(time_id)
-        text = f"Ваша запись\nВрач: {em}\nОтделение: {br}\nУслуга: {se}\nДата: {date}\nВремя записи: {time}"
+        text = f"Ваша запись\nВрач: {em}\nОтделение: {br}\nУслуга: {se}\nДата: {date}\nВремя записи: {str(time)[:5]}"
         record = (await add_record(callback.from_user.id, date, time, service_id, branch_id, employee_id)).inserted_primary_key[0]
-        close = await close_time(employee_id, time, date, record)
+        close = (await close_time(employee_id, time, date, record)).inserted_primary_key[0]
         await callback.message.answer(text= text)
         await callback.answer('')
         await remind(callback, close, record)
 
 
-async def remind(callback: CallbackQuery, close: ClosedTime, record_id):
-    message = "Подтвердите запись!"
+async def remind(callback: CallbackQuery, close_id, record_id):
     record = await get_close_record(record_id)
     employee = await get_employee(record.employee_id)
+    close = await get_close(close_id)
     res = close.day - timedelta(days=1)
-    remind_time = res.strftime("%Y-%m-%d %H:%M:%S")
-    while True:
-        if datetime.now().strftime("%Y-%m-%d %H:%M:%S") == remind_time:
-            await callback.message.answer(f'Вы подтверждаете запись?\n{record.date} в {record.start_time}\nВрач: {employee}\n', reply_markup=await kb.yes_no(record_id))
-            await callback.answer('')
-            break
-        await asleep(1)
+    remind_time = res.strftime("%d.%m.%Y %H:%M:%S")
+    await asleep(1)
+    date = record.date.strftime("%d.%m.%Y")
+    time = str(record.start_time)[:5]
+    await callback.message.answer(f'Подтверждаете запись?\n{date} в {time}\nВрач: {employee}\n', reply_markup=await kb.yes_no(record_id, "mind"))
+    await callback.answer('')
+    # while True:
+    #     if datetime.now().strftime("%Y-%m-%d %H:%M:%S") == remind_time:
+    #         break
 
 @router.message(F.text == "Отменить прием")
 async def cancel(message: Message):
@@ -157,7 +161,7 @@ async def cancel_record(callback: CallbackQuery):
     else:
         user_state[user_id].append(button_id)
         record_id = int(callback.data.split('_')[1])
-        await callback.message.answer("Вы уверены что хотите отменить прием?", reply_markup=await kb.yes_no(record_id))
+        await callback.message.answer("Вы уверены что хотите отменить прием?", reply_markup=await kb.yes_no(record_id, "delete"))
         await callback.answer('')
 
            
@@ -165,15 +169,16 @@ async def cancel_record(callback: CallbackQuery):
 async def yes(callback: CallbackQuery):
     user_id = callback.from_user.id
     user_state[user_id][-1]=''
-    record_id = int(callback.data.split('_')[1])
-    await callback.message.answer("Ваша запись отменена")
-    await callback.answer('')
-    await delete_record(record_id)
+    _, record_id, text = callback.data.split('_')
+    await callback.message.delete()
+    await callback.message.answer(text)
+    await delete_record(int(record_id))
     
 @router.callback_query(F.data.startswith('no'))
 async def no(callback: CallbackQuery):
     user_id = callback.from_user.id
     user_state[user_id][-1]=''
-    await callback.message.answer("Вы не стали отменять запись")
-    await callback.answer('')
+    text = callback.data.split('_')[1]
+    await callback.message.delete()
+    await callback.message.answer(text)
     

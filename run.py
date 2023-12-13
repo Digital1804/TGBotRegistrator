@@ -7,9 +7,9 @@ from app.handlers import router
 from app.database.models import create_tables, create_data, drop_tables
 
 async def main():
-    await drop_tables()
+    #await drop_tables()
     await create_tables()
-    await create_data()
+    #await create_data()
     bot = Bot(token=TOKEN)
     dp = Dispatcher()
     dp.include_router(router)

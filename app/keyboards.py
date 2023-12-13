@@ -96,7 +96,8 @@ async def timeslots(date, employee_id, branch_id, service_id, specialization_id)
     time_kb = InlineKeyboardBuilder()
     time = await get_times(employee_id, date)
     for t in time:
-        time_kb.add(InlineKeyboardButton(text=str(t.time), callback_data=f'time_{t.id}_{date}_{employee_id}_{branch_id}_{service_id}_{specialization_id}'))
+        x = str(t.time)
+        time_kb.add(InlineKeyboardButton(text=str(t.time)[:5], callback_data=f'time_{t.id}_{date}_{employee_id}_{branch_id}_{service_id}_{specialization_id}'))
     return time_kb.adjust(2).as_markup()
 
 async def records(user_id):
@@ -117,8 +118,18 @@ async def record(user_id):
 
 async def yes_no(record_id):
     yes_no_kb = InlineKeyboardBuilder()
-    yes_no_kb.add(InlineKeyboardButton(text="Да", callback_data=f"yes_{record_id}"))
-    yes_no_kb.add(InlineKeyboardButton(text="Нет", callback_data="no"))
+    yes_no_kb.add(InlineKeyboardButton(text="Да", callback_data=f"yes_{record_id}_Вы отменили запись"))
+    yes_no_kb.add(InlineKeyboardButton(text="Нет", callback_data="no_Вы не стали отменять запись"))
+    return yes_no_kb.adjust(2).as_markup()
+
+async def yes_no(record_id,type):
+    yes_no_kb = InlineKeyboardBuilder()
+    if type == "mind":
+        yes_no_kb.add(InlineKeyboardButton(text="Да", callback_data="no_Вы подтвердили запись"))
+        yes_no_kb.add(InlineKeyboardButton(text="Нет", callback_data=f"yes_{record_id}_Вы отменили запись"))
+    else:
+        yes_no_kb.add(InlineKeyboardButton(text="Да", callback_data=f"yes_{record_id}_Вы отменили запись"))
+        yes_no_kb.add(InlineKeyboardButton(text="Нет", callback_data="no_Вы не стали отменять запись"))
     return yes_no_kb.adjust(2).as_markup()
 
 async def contacts():
