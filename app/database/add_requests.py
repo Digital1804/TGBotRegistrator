@@ -18,3 +18,10 @@ async def add_record(user_id, data, time, service_id, branch_id, employee_id):
         res = await session.execute(insert(Record).values(user_id=user_id, employee_id=employee_id, branch_id=branch_id, service_id=service_id, start_time=time, date=date, price=await get_price(service_id), confirm=False))
         await session.commit()
         return res
+    
+async def close_time(employee_id, time, data, record_id):
+    async with assync_session() as session:
+        date = datetime.strptime(data, '%d.%m.%Y').date()
+        res = await session.execute(insert(ClosedTime).values(employee_id=employee_id, time=time, day=date, record_id=record_id))
+        await session.commit()
+        return res 
