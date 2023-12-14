@@ -139,15 +139,16 @@ async def remind(callback: CallbackQuery, close_id, record_id):
     close = await get_close(close_id)
     res = close.day - timedelta(days=1)
     remind_time = res.strftime("%d.%m.%Y %H:%M:%S")
-    await asleep(1)
-    date = record.date.strftime("%d.%m.%Y")
-    time = str(record.start_time)[:5]
-    await callback.message.answer(f'Подтверждаете запись?\n{date} в {time}\nВрач: {employee}\n', reply_markup=await kb.yes_no(record_id, "mind"))
-    await callback.answer('')
-    # while True:
-    #     if datetime.now().strftime("%Y-%m-%d %H:%M:%S") == remind_time:
-    #         break
-
+    while True:
+        if datetime.now().strftime("%Y-%m-%d %H:%M:%S") == remind_time:
+            date = record.date.strftime("%d.%m.%Y")
+            time = str(record.start_time)[:5]
+            await callback.message.answer(f'Подтверждаете запись?\n{date} в {time}\nВрач: {employee}\n', reply_markup=await kb.yes_no(record_id, "mind"))
+            await callback.answer('')
+        else:
+            await asleep(1)
+            break
+    
 @router.message(F.text.contains("Отменить прием"))
 async def cancel(message: Message):
     await message.answer("Выберите запись для отмены", reply_markup=await kb.records(message.from_user.id))
