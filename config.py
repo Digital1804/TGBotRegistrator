@@ -1,3 +1,3 @@
-TOKEN = '6895318769:AAG3r_agJmx65173CJuswnNTC5M0UJQWFYM'
-ADMIN_ID=732791195
+TOKEN = ''
+ADMIN_ID=
 DATABASE_URL = 'sqlite+aiosqlite:///hospital.db'
