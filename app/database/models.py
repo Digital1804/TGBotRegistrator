@@ -78,7 +78,7 @@ class Record(Base):
     service_id = mapped_column(ForeignKey("services.id"))
     branch_id = mapped_column(ForeignKey("branches.id"))
     employee_id = mapped_column(ForeignKey("employees.id"))
-    discription = mapped_column(String)
+    description = mapped_column(String)
     price = mapped_column(BigInteger)
     confirm = mapped_column(Boolean)
     

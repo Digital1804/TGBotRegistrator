@@ -62,3 +62,5 @@ async def get_records(user_id):
     async with assync_session() as session:
         res = await session.scalars(select(Record).where(Record.user_id==user_id))
         return res.all()
+    
+    
