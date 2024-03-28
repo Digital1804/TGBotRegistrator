@@ -147,7 +147,6 @@ async def remind(callback: CallbackQuery, close_id, record_id):
             await callback.answer('')
         else:
             await asleep(1)
-            break
     
 @router.message(F.text.contains("Отменить прием"))
 async def cancel(message: Message):
