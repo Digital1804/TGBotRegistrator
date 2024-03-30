@@ -1,4 +1,4 @@
-/hospital.db
-app/database/__pycache__/
-app/__pycache__/
-/config.py
+hospital.db
+__pycache__
+config.py
+./__pycache__
