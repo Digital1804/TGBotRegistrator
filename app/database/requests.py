@@ -11,3 +11,9 @@ async def delete_record(id):
         res = await session.execute(delete(Record).where(Record.id==id))
         await session.commit()
         return res
+    
+async def delete_closed_time(id):
+    async with assync_session() as session:
+        res = await session.execute(delete(ClosedTime).where(ClosedTime.record_id==id))
+        await session.commit()
+        return res

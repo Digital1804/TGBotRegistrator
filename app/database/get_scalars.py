@@ -2,6 +2,7 @@ from app.database.models import *
 from sqlalchemy import select
 
 from app.database.requests import  *
+from datetime import *
 
 day_name = {
     0: "Понедельник",
@@ -63,4 +64,11 @@ async def get_records(user_id):
         res = await session.scalars(select(Record).where(Record.user_id==user_id))
         return res.all()
     
+async def get_close_records():
+    async with assync_session() as session:
+        today = datetime.now()
+        res = today + timedelta(days=1)
+        remind_time = res.strftime("%Y-%m-%d")
+        res = await session.scalars(select(Record).where(Record.date==remind_time))
+        return res.all()
     

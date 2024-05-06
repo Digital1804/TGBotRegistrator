@@ -3,8 +3,10 @@ import asyncio
 import logging
 import sys
 from config import TOKEN
-from app.handlers import router
+from app import record_handlers
+from app import control_handlers
 from app.database.models import create_tables, create_data, drop_tables
+
 
 async def main():
     #await drop_tables()
@@ -12,7 +14,9 @@ async def main():
     #await create_data()
     bot = Bot(token=TOKEN, parse_mode='HTML')
     dp = Dispatcher()
-    dp.include_router(router)
+    dp.include_routers(record_handlers.router, control_handlers.router)
+    loop = asyncio.get_event_loop()
+    loop.create_task(control_handlers.remind(bot))
     await dp.start_polling(bot)
     
 if __name__ == '__main__':

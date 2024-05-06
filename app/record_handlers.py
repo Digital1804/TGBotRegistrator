@@ -20,28 +20,6 @@ async def process_start_command(message: Message):
     await add_user(message.from_user.id, message.from_user.username)
     await message.answer("Здравствуйте, чтобы вы хотели?", reply_markup=kb.main)
     
-@router.message(F.text.contains("Мои записи"))
-async def my_records(message: Message):
-    user_id = message.chat.id
-    records = await get_records(user_id)
-    if records != []:
-        for record in records:
-            date = record.date.strftime("%d.%m.%Y")
-            time = str(record.start_time)[:5]
-            await message.answer(f'{date} в {time}\nВрач: {await get_employee(record.employee_id)}\n')
-    else:
-        await message.answer("У вас нет записей")
-    
-    
-@router.message(F.text.contains("Контакты"))
-async def contacts(message: Message):
-    await message.answer("Наши контакты", reply_markup=await kb.contacts())
-    
-@router.callback_query(F.data.startswith('contbranch_'))
-async def cont_callback(callback: CallbackQuery):
-    branch = await get_full_branch(int(callback.data.split('_')[1]))
-    await callback.message.answer(f"<b>Адрес: </b>{branch.address}\n\n<b>Телефон регистратуры: </b><code>{branch.phone}</code>")
-    
 @router.message(F.text.contains("Записаться на прием"))
 async def spec(message: Message):
     user_id = message.chat.id
@@ -130,55 +108,3 @@ async def process_calendar_button(callback: CallbackQuery):
         close = (await close_time(employee_id, time, date, record)).inserted_primary_key[0]
         await callback.message.answer(text= text)
         await callback.answer('')
-        await remind(callback, close, record)
-
-
-async def remind(callback: CallbackQuery, close_id, record_id):
-    record = await get_close_record(record_id)
-    employee = await get_employee(record.employee_id)
-    close = await get_close(close_id)
-    res = close.day - timedelta(days=1)
-    remind_time = res.strftime("%d.%m.%Y %H:%M:%S")
-    while True:
-        if datetime.now().strftime("%Y-%m-%d %H:%M:%S") == remind_time:
-            date = record.date.strftime("%d.%m.%Y")
-            time = str(record.start_time)[:5]
-            await callback.message.answer(f'Подтверждаете запись?\n{date} в {time}\nВрач: {employee}\n', reply_markup=await kb.yes_no(record_id, "mind"))
-            await callback.answer('')
-        else:
-            await asleep(1)
-    
-@router.message(F.text.contains("Отменить прием"))
-async def cancel(message: Message):
-    await message.answer("Выберите запись для отмены", reply_markup=await kb.records(message.from_user.id))
-    
-@router.callback_query(F.data.startswith('record_'))
-async def cancel_record(callback: CallbackQuery):
-    user_id = callback.from_user.id
-    button_id = 'record_'
-    if button_id in user_state[user_id]:
-        await callback.answer("Вы уже выбрали запись")
-    else:
-        user_state[user_id].append(button_id)
-        record_id = int(callback.data.split('_')[1])
-        await callback.message.answer("Вы уверены что хотите отменить прием?", reply_markup=await kb.yes_no(record_id, "delete"))
-        await callback.answer('')
-
-           
-@router.callback_query(F.data.startswith('yes'))
-async def yes(callback: CallbackQuery):
-    user_id = callback.from_user.id
-    user_state[user_id][-1]=''
-    _, record_id, text = callback.data.split('_')
-    await callback.message.delete()
-    await callback.message.answer(text)
-    await delete_record(int(record_id))
-    
-@router.callback_query(F.data.startswith('no'))
-async def no(callback: CallbackQuery):
-    user_id = callback.from_user.id
-    user_state[user_id][-1]=''
-    text = callback.data.split('_')[1]
-    await callback.message.delete()
-    await callback.message.answer(text)
-    
