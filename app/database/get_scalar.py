@@ -45,3 +45,5 @@ async def get_close(close_id):
     async with assync_session() as session:
         res = await session.scalar(select(ClosedTime).where(ClosedTime.id==close_id))
         return res
+    
+async def get_similar_custumer(user_id)

@@ -16,7 +16,7 @@ async def main():
     dp = Dispatcher()
     dp.include_routers(record_handlers.router, control_handlers.router)
     loop = asyncio.get_event_loop()
-    loop.create_task(control_handlers.remind(bot))
+    loop.create_task(control_handlers.remind())
     await dp.start_polling(bot)
     
 if __name__ == '__main__':

@@ -8,8 +8,19 @@ from app.database.requests import  *
 from app.database.add_requests import  *
 from app.database.get_scalar import *
 from app.database.get_scalars import *
-router = Router()
 
+async def remind():
+    while True:
+        records = await get_close_records()
+        for record in records:
+            date = record.date.strftime("%d.%m.%Y")
+            employee = await get_employee(record.employee_id)
+            time = str(record.start_time)[:5]
+            await bot.send_message(chat_id=record.user_id, text=f'Подтверждаете запись?\n{date} в {time}\nВрач: {employee}\n', reply_markup=await kb.yes_no(record.id, "mind"))
+        await asleep(60*60*24)
+        
+router = Router()
+    
 @router.message(F.text.contains("Мои записи"))
 async def my_records(message: Message):
     records = await get_records(user_id)
@@ -31,17 +42,6 @@ async def cont_callback(callback: CallbackQuery):
     branch = await get_full_branch(int(callback.data.split('_')[1]))
     await callback.message.answer(f"<b>Адрес: </b>{branch.address}\n\n<b>Телефон регистратуры: </b><code>{branch.phone}</code>")
 
-
-async def remind(bot):
-    while True:
-        records = await get_close_records()
-        for record in records:
-            date = record.date.strftime("%d.%m.%Y")
-            employee = await get_employee(record.employee_id)
-            time = str(record.start_time)[:5]
-            await bot.send_message(chat_id=record.user_id, text=f'Подтверждаете запись?\n{date} в {time}\nВрач: {employee}\n', reply_markup=await kb.yes_no(record.id, "mind"))
-        await asleep(60*60*24)
-    
 @router.message(F.text.contains("Отменить прием"))
 async def cancel(message: Message):
     await message.answer("Выберите запись для отмены", reply_markup=await kb.records(message.from_user.id))
@@ -57,17 +57,22 @@ async def cancel_record(callback: CallbackQuery):
         await callback.answer('')
 
            
-@router.callback_query(F.data.startswith('yes'))
-async def yes(callback: CallbackQuery):
-    _, record_id, text = callback.data.split('_')
-    await callback.message.delete()
-    await callback.message.answer(text)
-    await delete_record(int(record_id))
-    await delete_closed_time(int(record_id))
-    
 @router.callback_query(F.data.startswith('no'))
 async def no(callback: CallbackQuery):
     text = callback.data.split('_')[1]
     await callback.message.delete()
     await callback.message.answer(text)
     
+@router.callback_query(F.data.startswith('yes'))
+async def yes(callback: CallbackQuery):
+    _, record_id, text = callback.data.split('_')
+    await callback.message.delete()
+    await callback.message.answer(text)
+    await offer_time(get_record(int(record_id)))
+    await delete_record(int(record_id))
+    await delete_closed_time(int(record_id))
+
+#a function for offering other clients to sign up for a special time  
+async def offer_time(record):
+    custumer = await get_similar_record(record.date, record.start_time, record.employee_id, record.service_id, record.branch_id)
+    await bot.send_message(chat_id=message.chat.id, text="Введите дату и время для приема в формате ДД.ММ.ГГГГ ЧЧ:ММ")
