@@ -116,20 +116,22 @@ async def record(user_id):
         records_kb.add(InlineKeyboardButton(text=f"{record.date} в {record.start_time}\nВрач: {employee}", callback_data=f'record_{record.id}'))
     return records_kb.adjust(1).as_markup()
 
-async def yes_no(record_id):
+async def yes_no_mind(record_id):
+    yes_no_kb = InlineKeyboardBuilder()
+    yes_no_kb.add(InlineKeyboardButton(text="Да", callback_data="no_Вы подтвердили запись"))
+    yes_no_kb.add(InlineKeyboardButton(text="Нет", callback_data=f"yes_{record_id}_Вы отменили запись"))
+    return yes_no_kb.adjust(2).as_markup()
+
+async def yes_no_delete(record_id):
     yes_no_kb = InlineKeyboardBuilder()
     yes_no_kb.add(InlineKeyboardButton(text="Да", callback_data=f"yes_{record_id}_Вы отменили запись"))
     yes_no_kb.add(InlineKeyboardButton(text="Нет", callback_data="no_Вы не стали отменять запись"))
     return yes_no_kb.adjust(2).as_markup()
 
-async def yes_no(record_id,type):
+async def yes_no_offer(record_id):
     yes_no_kb = InlineKeyboardBuilder()
-    if type == "mind":
-        yes_no_kb.add(InlineKeyboardButton(text="Да", callback_data="no_Вы подтвердили запись"))
-        yes_no_kb.add(InlineKeyboardButton(text="Нет", callback_data=f"yes_{record_id}_Вы отменили запись"))
-    else:
-        yes_no_kb.add(InlineKeyboardButton(text="Да", callback_data=f"yes_{record_id}_Вы отменили запись"))
-        yes_no_kb.add(InlineKeyboardButton(text="Нет", callback_data="no_Вы не стали отменять запись"))
+    yes_no_kb.add(InlineKeyboardButton(text="Да", callback_data=f"record_{record_id}"))
+    yes_no_kb.add(InlineKeyboardButton(text="Нет", callback_data="next"))
     return yes_no_kb.adjust(2).as_markup()
 
 async def contacts():

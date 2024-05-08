@@ -36,7 +36,7 @@ async def get_price(service_id):
         price = await session.scalar(select(Services.price).where(Services.id==service_id))
         return price
 
-async def get_close_record(rec_id):
+async def get_record(rec_id):
     async with assync_session() as session:
         res = await session.scalar(select(Record).where(Record.id==rec_id))
         return res
@@ -46,4 +46,7 @@ async def get_close(close_id):
         res = await session.scalar(select(ClosedTime).where(ClosedTime.id==close_id))
         return res
     
-async def get_similar_custumer(user_id)
+async def get_similar_record(user_id, employee_id, service_id, branch_id):
+    async with assync_session() as session:
+        res = await session.scalar(select(Record).where(Record.user_id!=user_id).where(Record.employee_id==employee_id, Record.service_id==service_id, Record.branch_id==branch_id))
+        return res
